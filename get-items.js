@@ -1,19 +1,28 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises'); // Node.js의 fs.promises 모듈을 사용
+
 const resultfile = require('./dist/result.json')
+const common = require('./util/common.js')
+const { vmodelBinder } = require('./util/index.js')
+
 
 
 async function init () {
   const browser = await puppeteer.launch({
     headless: false, // 브라우저를 화면에 표시하지 않을 경우 주석 해제
     // args: ['--proxy-server=http://your-proxy-server:port'], // 프록시 사용 시 주석 해제하고 주소 설정
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1020,890','--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1020,890','--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"', '--disable-notifications'],
     slowMo: 10,
+    // defaultArgs: [ // 권한 허용
+    //   '--use-fake-ui-for-media-stream',
+    //   '--use-fake-device-for-media-stream',
+    //   '--enable-features=WebNotifications',
+    // ]
   });
 
   const page = await browser.newPage();
 
-  await crawlpage(page)
+  await crawlpage(page, browser)
 }
 
 /**
@@ -35,10 +44,17 @@ function formatJSON (object) {
   return keys
 }
 
-
+// 광고 제거
 async function closeAD (page) {
+  // await page.waitForTimeout(1500)
+  await page.waitForSelector('.btn-cancel')
+  const cancelButton = await page.$$('.btn-cancel')
+  await cancelButton[2].click()
+}
+
+// 🌸 디버깅용 광고 제거
+async function closeAD_Debugger (page) {
   await page.waitForTimeout(1500)
-  
   await page.waitForSelector('.btn-cancel')
   const cancelButton = await page.$$('.btn-cancel')
   await cancelButton[2].click()
@@ -48,17 +64,37 @@ async function closeAD (page) {
   await closeButton.click()
 }
 
+async function settingLogin (newPage, browser) {
+  await common.login(newPage)
+  await closeAD(newPage)
 
-async function crawlpage(page, params = '') {
+  const cookies = await newPage.cookies();
+  // console.log(cookies);
+  return cookies
+}
+
+
+async function crawlpage(newPage, browser) {
   const result = formatJSON(resultfile)
   // console.log(result);
 
   try {
-    // 웹 페이지로 이동
-    await page.goto('https://itemscout.io/category');
+    // const debugging = false
 
-    // 광고 제거
-    await closeAD(page)
+    // let page = null
+    // if (debugging) { // 임시
+    //   page = await newPage
+    // } else {
+    // 로그인부터 해야합니당
+    const cookies = await settingLogin(newPage, browser)
+    
+    const page = await browser.newPage();
+    await page.setCookie(...cookies);
+    // }
+
+    // 웹 페이지로 이동
+    await page.goto('https://itemscout.io/category', { waitUntil: 'domcontentloaded' }); // 다른 페이지로 이동 시까지 대기
+    
     await page.waitForTimeout(1000)
 
     // input 창 입력 시작
@@ -84,6 +120,7 @@ async function crawlpage(page, params = '') {
     await page.keyboard.press('Enter');
     
     
+    // (🌸 디버깅시 주석처리하고 디버깅)
     // 검색 조건 설정
     const optionWrapper = '.options-toggle-wrapper'
     await page.waitForSelector(optionWrapper)
@@ -105,8 +142,23 @@ async function crawlpage(page, params = '') {
     const durationButtons = await page.$$(`${durationContainer} > .duration-button`)
     await durationButtons[1].click()
 
+    // await closeAD_Debugger(page) // 디버깅용 🌸
 
+    await page.waitForTimeout(400)
+    const durationRangeWrapper = '.duration-range-wrapper'
+    const datepicker = durationRangeWrapper + ' .date-picker-input.category-date-picker'
+    await page.waitForSelector(datepicker)
+    const pickers = await page.$$(`${datepicker}`)
+    await pickers[1].click()
+    
+    // 작년 1월로 자동 세팅 *초기화
+    const pickerpop = '.v-date-picker-table'
+    await page.waitForSelector(pickerpop)
+    const picker2 = await page.$(`${pickerpop} > table > tbody > tr:nth-child(1) > td:nth-child(1)`)
+    await picker2.click()
 
+    const durationButton = await page.$(`${durationRangeWrapper} .btn-apply-duration`)
+    await durationButton.click()
 
   } catch (error) {
     

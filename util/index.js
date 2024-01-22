@@ -14,4 +14,14 @@ function getCurrentTime () {
   return currentTime
 }
 
-export { getCurrentTime }
+const vmodelBinder = (input, text) => {
+  input.value = text;
+
+  const event = new Event('input', { bubbles: true });
+  input.dispatchEvent(event);
+}
+
+module.exports={
+  getCurrentTime,
+  vmodelBinder
+}
