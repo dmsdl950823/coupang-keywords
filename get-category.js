@@ -8,7 +8,7 @@ async function init () {
     headless: false, // 브라우저를 화면에 표시하지 않을 경우 주석 해제
     // args: ['--proxy-server=http://your-proxy-server:port'], // 프록시 사용 시 주석 해제하고 주소 설정
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1020,890','--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'],
-    slowMo: 30,
+    slowMo: 10,
   });
 
   const page = await browser.newPage();
@@ -82,7 +82,7 @@ async function crawlpage(page, params = '') {
      */
     const reassign = async () => {
       // 3차는 없다가 생기는거라서 다시 호출
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(500);
       return categories.$$('.select')
     }
 
@@ -192,6 +192,7 @@ async function crawlpage(page, params = '') {
 
   } catch (error) {
     console.error('Error during crawling:', error.message);
+    await saveJSONFile(result)
   } finally {
     // 브라우저 닫기
     // await browser.close();
