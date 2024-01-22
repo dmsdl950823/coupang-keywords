@@ -36,6 +36,19 @@ function formatJSON (object) {
 }
 
 
+async function closeAD (page) {
+  await page.waitForTimeout(1500)
+  
+  await page.waitForSelector('.btn-cancel')
+  const cancelButton = await page.$$('.btn-cancel')
+  await cancelButton[2].click()
+
+  await page.waitForSelector('.close-text')
+  const closeButton = await page.$('.close-text')
+  await closeButton.click()
+}
+
+
 async function crawlpage(page, params = '') {
   const result = formatJSON(resultfile)
   // console.log(result);
@@ -45,13 +58,8 @@ async function crawlpage(page, params = '') {
     await page.goto('https://itemscout.io/category');
 
     // 광고 제거
-    await page.waitForTimeout(1500)
-    await page.waitForSelector('.its-modal')
-    await page.evaluate((classSelector) => {
-      const elements = document.querySelectorAll(classSelector);
-      elements.forEach(element => element.remove());
-    }, '.its-modal')
-    
+    await closeAD(page)
+    await page.waitForTimeout(1000)
 
     // input 창 입력 시작
     await page.waitForSelector('.category-selector-title');
@@ -76,6 +84,29 @@ async function crawlpage(page, params = '') {
     await page.keyboard.press('Enter');
     
     
+    // 검색 조건 설정
+    const optionWrapper = '.options-toggle-wrapper'
+    await page.waitForSelector(optionWrapper)
+    const optionsWrappers = await page.$$(optionWrapper)
+
+    // 키워드 유형 - [정보성]
+    const keywordTypes = await optionsWrappers[0].$$('label')
+    await keywordTypes[1].click()
+
+    // 브랜드 키워드 - [브랜드 제거]
+    const brandKeyword = await optionsWrappers[1].$('.option')
+    await brandKeyword.click()
+
+
+
+    // 기간 설정
+    const durationContainer = '.duration-type-container'
+    await page.waitForSelector(durationContainer)
+    const durationButtons = await page.$$(`${durationContainer} > .duration-button`)
+    await durationButtons[1].click()
+
+
+
 
   } catch (error) {
     
