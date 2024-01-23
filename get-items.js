@@ -3,6 +3,7 @@ const fs = require('fs/promises'); // Node.js의 fs.promises 모듈을 사용
 
 const resultfile = require('./dist/result.json')
 const common = require('./util/common.js')
+const { changeFileName, saveExcelFiles, deleteMonthFiles } = require('./change-filename')
 const { vmodelBinder } = require('./util/index.js')
 
 
@@ -73,14 +74,23 @@ async function settingLogin (newPage, browser) {
   return cookies
 }
 
+/**
+ * 엑셀 다운로드 버튼 클릭
+ * @param {*} page 
+ */
+async function excelDownload (page) {
+  const resultTable = '.keyword-table-options-container'
+  await page.waitForSelector(resultTable)
+  const exceldownload = await page.$(`${resultTable} .excel-download-button`)
+  await exceldownload.click()
+}
+
 
 async function crawlpage(newPage, browser) {
   const result = formatJSON(resultfile)
   // console.log(result);
 
   try {
-    
-    
     // 🌸 디버깅용 - 로그인 생략할때만 사용
     // const page = await newPage
 
@@ -89,6 +99,8 @@ async function crawlpage(newPage, browser) {
     
     const page = await browser.newPage();
     await page.setCookie(...cookies);
+
+    // /. -------
 
     // 웹 페이지로 이동
     await page.goto('https://itemscout.io/category', { waitUntil: 'domcontentloaded' }); // 다른 페이지로 이동 시까지 대기
@@ -148,22 +160,48 @@ async function crawlpage(newPage, browser) {
     const pickers = await page.$$(`${datepicker}`)
     await pickers[1].click()
     
-    // 작년 1월로 자동 세팅 *초기화
+    // 작년 1월로 자동 세팅 (*초기화)
     const pickerpop = '.v-date-picker-table'
     await page.waitForSelector(pickerpop)
     const picker2 = await page.$(`${pickerpop} > table > tbody > tr:nth-child(1) > td:nth-child(1)`)
     await picker2.click()
 
+    // [조회] 버튼 클릭
     const durationButton = await page.$(`${durationRangeWrapper} .btn-apply-duration`)
     await durationButton.click()
 
+    await page.waitForTimeout(2000) // 데이터 response 대기 시간 있을 수 있음
 
+    await excelDownload(page) // 1월 ~ 12월 엑셀 데이터 저장
+    await page.waitForTimeout(2000) // 다운로드가 덜 되었을 때 동작하면 안됨
 
-    // 엑셀 다운로드 버튼 클릭
-    const resultTable = '.keyword-table-options-container'
-    await page.waitForSelector(resultTable)
-    const exceldownload = await page.$(`${resultTable} .excel-download-button`)
-    await exceldownload.click()
+    await changeFileName(0)
+
+    // 1월부터 12월까지 순차적으로 진행
+    for (let i = 1; i < 12; i++) {
+      await page.waitForTimeout(3000) // 너무 빨리 돌리면 못찾는 이슈가 있음 ㅠ
+
+      await pickers[0].click() // start datepicker 클릭
+  
+      const tds = `.menuable__content__active ${pickerpop} > table > tbody td`
+      await page.waitForSelector(tds)
+
+      const monthButtons = await page.$$(tds) // 1월 ~ 12월 선택
+      await monthButtons[i].click()
+
+      await durationButton.click() // [조회] 버튼
+      // console.log(i);
+
+      await page.waitForTimeout(2000)
+
+      await excelDownload(page) // 1월 ~ 12월 엑셀 데이터 저장
+      await page.waitForTimeout(2000) // 다운로드가 덜 되었을 때 동작하면 안됨
+
+      await changeFileName(i)
+    }
+    
+    await saveExcelFiles(result[0]) // 파일 이름으로 따로 시트에 저장
+    deleteMonthFiles() // month 관련된 파일 모두 삭제
   } catch (error) {
     
   }

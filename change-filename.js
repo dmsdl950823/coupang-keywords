@@ -4,7 +4,7 @@ const path = require('path');
 
 const downloadPath = '/Users/jejung/Downloads'; // 다운로드된 파일의 경로로 변경
 
-async function changeFileName (index = 1) { // 1월부터 시작
+async function changeFileName (index = 0) { // 1월부터 시작
   // 파일 읽어오기
   const files = fs.readdirSync(downloadPath);
   const targetFiles = files.filter(file => file.startsWith('itemscout_io') && file.endsWith('.xlsx'));
@@ -14,11 +14,23 @@ async function changeFileName (index = 1) { // 1월부터 시작
   // 파일 이름 변경
   for (const file of targetFiles) {
     const oldFilePath = path.join(downloadPath, file);
-    const newFileName = `month_${index}.xlsx` // 1월 ~ 12월
+    const newFileName = `month_${index + 1}.xlsx` // 1월 ~ 12월
     const newFilePath = path.join(downloadPath, newFileName);
 
     fs.renameSync(oldFilePath, newFilePath);
     console.log(`# Renamed file: ${file} => ${newFileName}`);
+  }
+}
+
+async function deleteMonthFiles () {
+  // `month_`로 시작하는 모든 .xlsx 파일 삭제
+  const files = fs.readdirSync(downloadPath);
+  const monthFiles = files.filter(file => file.startsWith('month_') && file.endsWith('.xlsx'));
+
+  for (const monthFile of monthFiles) {
+    const filePath = path.join(downloadPath, monthFile);
+    fs.unlinkSync(filePath);
+    console.log(`Deleted file: ${monthFile}`);
   }
 }
 
@@ -45,8 +57,8 @@ async function saveExcelFiles (newFileName = 'new_excel') {
     }
 
     // 시트의 이름을 파일 목록의 숫자로 지정
-  for (let i = 0; i < savedFiles.length; i++) {
-    const file = savedFiles[i];
+  for (let i = 0; i < 12; i++) {
+    const file = `month_${i + 1}.xlsx`
     const sheetName = `${i + 1}월`;
 
     // 엑셀 파일 읽기
@@ -71,13 +83,27 @@ async function saveExcelFiles (newFileName = 'new_excel') {
   // 새로운 엑셀 파일 저장
   xlsx.writeFile(workbook, newExcelFilePath);
   console.log(`New Excel file created: ${newExcelFilePath}`);
+
+  // 파일 저장하고 마무리
+  // deleteMonthFiles()
 }
 
+// 파일 사용 방법
 // changeFileName(1)
 // changeFileName(2)
 // changeFileName(3)
 // changeFileName(4)
 // ...
 
-saveExcelFiles('니트스웨터')
-saveExcelFiles('텍스트2')
+// saveExcelFiles('니트스웨터')
+// saveExcelFiles('텍스트2')
+
+// 파일 모두 삭제
+// deleteMonthFiles()
+
+module.exports={
+  changeFileName,
+  saveExcelFiles,
+  deleteMonthFiles
+}
+
