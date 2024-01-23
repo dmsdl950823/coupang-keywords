@@ -1,8 +1,8 @@
 const { vmodelBinder } = require('./index')
 
 const config = {
-  id: '아이디',
-  pw: '비밀번호'
+  id: 'dmsdl950823@naver.com',
+  pw: 'ekffkddl05'
 }
 
 async function login (page) {

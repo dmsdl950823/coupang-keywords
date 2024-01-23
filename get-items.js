@@ -79,18 +79,16 @@ async function crawlpage(newPage, browser) {
   // console.log(result);
 
   try {
-    // const debugging = false
+    
+    
+    // 🌸 디버깅용 - 로그인 생략할때만 사용
+    // const page = await newPage
 
-    // let page = null
-    // if (debugging) { // 임시
-    //   page = await newPage
-    // } else {
-    // 로그인부터 해야합니당
+    // 정상 동작시 로그인부터 해야합니당
     const cookies = await settingLogin(newPage, browser)
     
     const page = await browser.newPage();
     await page.setCookie(...cookies);
-    // }
 
     // 웹 페이지로 이동
     await page.goto('https://itemscout.io/category', { waitUntil: 'domcontentloaded' }); // 다른 페이지로 이동 시까지 대기
@@ -120,8 +118,7 @@ async function crawlpage(newPage, browser) {
     await page.keyboard.press('Enter');
     
     
-    // (🌸 디버깅시 주석처리하고 디버깅)
-    // 검색 조건 설정
+    // 검색 조건 설정 (🌸 디버깅시 검색조건은 전체 주석처리하고 디버깅)
     const optionWrapper = '.options-toggle-wrapper'
     await page.waitForSelector(optionWrapper)
     const optionsWrappers = await page.$$(optionWrapper)
@@ -159,6 +156,16 @@ async function crawlpage(newPage, browser) {
 
     const durationButton = await page.$(`${durationRangeWrapper} .btn-apply-duration`)
     await durationButton.click()
+
+
+
+    // 엑셀 다운로드 버튼 클릭
+    const resultTable = '.keyword-table-options-container'
+    await page.waitForSelector(resultTable)
+    const exceldownload = await page.$(`${resultTable} .excel-download-button`)
+    await exceldownload.click()
+
+
 
   } catch (error) {
     
