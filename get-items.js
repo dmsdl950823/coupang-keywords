@@ -164,9 +164,6 @@ async function crawlpage(newPage, browser) {
     await page.waitForSelector(resultTable)
     const exceldownload = await page.$(`${resultTable} .excel-download-button`)
     await exceldownload.click()
-
-
-
   } catch (error) {
     
   }
