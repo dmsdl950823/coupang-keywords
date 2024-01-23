@@ -1,3 +1,8 @@
+/**
+ * 네이버에서 카테고리 목록만 크롤링 해오는 함수
+ * Object 형태로 result.json 에 [분류1 > 분류2 > 분류3] 순으로 저장한다.
+ */
+
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises'); // Node.js의 fs.promises 모듈을 사용
 
