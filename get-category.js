@@ -6,16 +6,12 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises'); // Node.js의 fs.promises 모듈을 사용
 
+const { puppeteerHeader } = require('./util/util')
+
 const result = {}
 
 async function init () {
-  const browser = await puppeteer.launch({
-    headless: false, // 브라우저를 화면에 표시하지 않을 경우 주석 해제
-    // args: ['--proxy-server=http://your-proxy-server:port'], // 프록시 사용 시 주석 해제하고 주소 설정
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1020,890','--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"'],
-    slowMo: 10,
-  });
-
+  const browser = await puppeteer.launch(puppeteerHeader);
   const page = await browser.newPage();
 
   await crawlpage(page)

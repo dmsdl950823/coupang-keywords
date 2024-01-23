@@ -8,8 +8,7 @@ async function changeFileName (index = 0) { // 1월부터 시작
   // 파일 읽어오기
   const files = fs.readdirSync(downloadPath);
   const targetFiles = files.filter(file => file.startsWith('itemscout_io') && file.endsWith('.xlsx'));
-  
-  console.log(targetFiles);
+  // console.log(targetFiles); // 🌸 디버깅시 반드시 확인
 
   // 파일 이름 변경
   for (const file of targetFiles) {
@@ -18,7 +17,7 @@ async function changeFileName (index = 0) { // 1월부터 시작
     const newFilePath = path.join(downloadPath, newFileName);
 
     fs.renameSync(oldFilePath, newFilePath);
-    console.log(`# Renamed file: ${file} => ${newFileName}`);
+    // console.log(`>> Renamed file: ${file} => ${newFileName}`);
   }
 }
 
@@ -30,7 +29,7 @@ async function deleteMonthFiles () {
   for (const monthFile of monthFiles) {
     const filePath = path.join(downloadPath, monthFile);
     fs.unlinkSync(filePath);
-    console.log(`Deleted file: ${monthFile}`);
+    // console.log(`>> Deleted file: ${monthFile}`);
   }
 }
 
@@ -73,8 +72,7 @@ async function saveExcelFiles (newFileName = 'new_excel') {
     // Array의 데이터를 시트에 추가
     const sheet = xlsx.utils.aoa_to_sheet(csvArray);
     xlsx.utils.book_append_sheet(workbook, sheet, sheetName);
-
-    console.log(`Added data from ${file} to ${sheetName}`);
+    // console.log(`Added data from ${file} to ${sheetName}`);
   }
 
   // 새로운 엑셀 파일 저장
@@ -82,13 +80,24 @@ async function saveExcelFiles (newFileName = 'new_excel') {
 
   // 새로운 엑셀 파일 저장
   xlsx.writeFile(workbook, newExcelFilePath);
-  console.log(`New Excel file created: ${newExcelFilePath}`);
+  console.log(`>>> New Excel file created: ${newExcelFilePath}`);
 
   // 파일 저장하고 마무리
-  // deleteMonthFiles()
 }
 
-// 파일 사용 방법
+module.exports={
+  changeFileName,
+  saveExcelFiles,
+  deleteMonthFiles
+}
+
+
+
+// 외부에서 파일 사용 순서
+// 1. 파일 이름을 먼저 바꿔준다 (changeFileName)
+// 2. 최종 저장할 엑셀 파일 이름을 설정한다 (saveExcelFiles)
+// 2. 최종 저장했던 엑셀만 제외하고 사용했던 엑셀 파일들을 모두 삭제한다. (deleteMonthFiles)
+
 // changeFileName(1)
 // changeFileName(2)
 // changeFileName(3)
@@ -100,10 +109,3 @@ async function saveExcelFiles (newFileName = 'new_excel') {
 
 // 파일 모두 삭제
 // deleteMonthFiles()
-
-module.exports={
-  changeFileName,
-  saveExcelFiles,
-  deleteMonthFiles
-}
-
