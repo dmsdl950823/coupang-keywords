@@ -28,7 +28,7 @@ async function init () {
   const cateList = formatJSON(categories)
   const cookies = await settingLogin(page, browser) // 쿠키 저장
 
-  for (let i = 0; i < cateList.length; i++) {
+  for (let i = 185; i < cateList.length; i++) {
     const name = cateList[i]
     await crawlpage({ browser, cookies, name, idx: i })
   }
